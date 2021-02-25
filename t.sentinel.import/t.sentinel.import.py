@@ -107,13 +107,21 @@ import sys
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 
-
 # initialize global vars
 rm_regions = []
 rm_vectors = []
 rm_rasters = []
 tmpfolder = None
 
+def require_grass_program(program_name, install_instruction=None):
+    prog = str(program_name)
+    if not grass.find_program(prog, '--help'):
+        if install_instruction is None:
+            install_instruction = prog
+        err = _("The '{}' module was not found, install it first:")
+        err += "\ng.extension {}"
+        err = err.format(prog, str(install_instruction))
+        grass.fatal(err)
 
 def cleanup():
     nuldev = open(os.devnull, 'w')
@@ -196,22 +204,11 @@ def main():
     test_nprocs_memory()
 
     grass.message(_("Downloading Sentinel scenes ..."))
-    if not grass.find_program('i.sentinel.download', '--help'):
-        grass.fatal(_("The 'i.sentinel.download' module was not found, install it first:") +
-                    "\n" +
-                    "g.extension i.sentinel")
-    if not grass.find_program('i.sentinel.import', '--help'):
-        grass.fatal(_("The 'i.sentinel.import' module was not found, install it first:") +
-                    "\n" +
-                    "g.extension i.sentinel")
-    if not grass.find_program('i.sentinel.parallel.download', '--help'):
-        grass.fatal(_("The 'i.sentinel.parallel.download' module was not found, install it first:") +
-                    "\n" +
-                    "g.extension i.sentinel")
-    if not grass.find_program('i.zero2null', '--help'):
-        grass.fatal(_("The 'i.zero2null' module was not found, install it first:") +
-                    "\n" +
-                    "g.extension i.zero2null")
+
+    require_grass_program("i.sentinel.download", "i.sentinel")
+    require_grass_program("i.sentinel.import", "i.sentinel")
+    require_grass_program("i.sentinel.parallel.download", "i.sentinel")
+    require_grass_program("i.zero2null")
 
     # create temporary directory to download data
     if tmpdirectory:
